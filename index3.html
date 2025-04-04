@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Storage with Subtopics</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; }
+        .row { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+        .column { flex: 1; }
+        .readonly { background-color: #f0f0f0; padding: 5px; margin-top: 5px; }
+        .delete-btn { background-color: red; color: white; border: none; padding: 5px; cursor: pointer; }
+        .backup-btn { background-color: blue; color: white; padding: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Word Storage</h2>
+    <input type="text" id="topicName" placeholder="Enter topic name">
+    <button onclick="addTopic()">Add Topic</button>
+    <button class="backup-btn" onclick="backupData()">Backup Data</button>
+    <div id="topics"></div>
+
+    <script>
+        function loadTopics() {
+            let topics = JSON.parse(localStorage.getItem('topics')) || [];
+            let topicsDiv = document.getElementById('topics');
+            topicsDiv.innerHTML = '';
+            topics.forEach((topic, index) => {
+                let topicDiv = document.createElement('div');
+                topicDiv.classList.add('section');
+                topicDiv.innerHTML = `<strong>${topic.name}</strong> 
+                                      <button class="delete-btn" onclick="deleteTopic(${index})">Delete</button>`;
+                
+                let subtopicDiv = document.createElement('div');
+                subtopicDiv.innerHTML = `<input type='text' id='subtopic${index}' placeholder='Add Subtopic'>
+                                        <button onclick='addSubtopic(${index})'>Save</button>`;
+                topicDiv.appendChild(subtopicDiv);
+
+                if (topic.subtopics && topic.subtopics.length > 0) {
+                    let subtopicList = document.createElement('ul');
+                    topic.subtopics.forEach(subtopic => {
+                        let li = document.createElement('li');
+                        li.classList.add('readonly');
+                        li.textContent = subtopic;
+                        subtopicList.appendChild(li);
+                    });
+                    topicDiv.appendChild(subtopicList);
+                }
+                
+                topicsDiv.appendChild(topicDiv);
+            });
+        }
+
+        function addTopic() {
+            let topicName = document.getElementById('topicName').value.trim();
+            if (!topicName) return;
+            let topics = JSON.parse(localStorage.getItem('topics')) || [];
+            topics.push({ name: topicName, subtopics: [] });
+            localStorage.setItem('topics', JSON.stringify(topics));
+            document.getElementById('topicName').value = '';
+            loadTopics();
+        }
+
+        function addSubtopic(index) {
+            let input = document.getElementById(`subtopic${index}`);
+            let subtopicText = input.value.trim();
+            if (!subtopicText) return;
+            let topics = JSON.parse(localStorage.getItem('topics')) || [];
+            if (!topics[index].subtopics) topics[index].subtopics = [];
+            topics[index].subtopics.push(subtopicText);
+            localStorage.setItem('topics', JSON.stringify(topics));
+            input.value = ''; // Clear input after adding
+            loadTopics();
+        }
+
+        function deleteTopic(index) {
+            let topics = JSON.parse(localStorage.getItem('topics')) || [];
+            topics.splice(index, 1);
+            localStorage.setItem('topics', JSON.stringify(topics));
+            loadTopics();
+        }
+
+        function backupData() {
+            let topics = localStorage.getItem('topics');
+            if (!topics) return;
+            let blob = new Blob([topics], { type: "application/json" });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "word_storage_backup.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        document.addEventListener("DOMContentLoaded", loadTopics);
+    </script>
+</body>
+</html>
