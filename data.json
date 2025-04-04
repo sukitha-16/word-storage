@@ -1,1 +1,12 @@
-[]
+{
+  "topics": [
+    {
+      "name": "Science",
+      "subtopics": ["Physics", "Chemistry", "Biology"]
+    },
+    {
+      "name": "Technology",
+      "subtopics": ["AI", "Cybersecurity", "Blockchain"]
+    }
+  ]
+}
