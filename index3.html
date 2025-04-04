@@ -7,8 +7,6 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .section { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; }
-        .row { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
-        .column { flex: 1; }
         .readonly { background-color: #f0f0f0; padding: 5px; margin-top: 5px; }
         .delete-btn { background-color: red; color: white; border: none; padding: 5px; cursor: pointer; }
         .backup-btn { background-color: blue; color: white; padding: 5px; cursor: pointer; }
@@ -19,11 +17,32 @@
     <input type="text" id="topicName" placeholder="Enter topic name">
     <button onclick="addTopic()">Add Topic</button>
     <button class="backup-btn" onclick="backupData()">Backup Data</button>
+    
+    <input type="file" id="importFile" accept=".json">
+    <button onclick="importData()">Import Data</button>
+
     <div id="topics"></div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!localStorage.getItem('topics')) {
+                loadTopics();
+            } else {
+                renderTopics(JSON.parse(localStorage.getItem('topics')));
+            }
+        });
+
         function loadTopics() {
-            let topics = JSON.parse(localStorage.getItem('topics')) || [];
+            fetch('data.json')
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.setItem('topics', JSON.stringify(data)); // Store it locally
+                    renderTopics(data);
+                })
+                .catch(error => console.error('Error loading JSON:', error));
+        }
+
+        function renderTopics(topics) {
             let topicsDiv = document.getElementById('topics');
             topicsDiv.innerHTML = '';
             topics.forEach((topic, index) => {
@@ -59,7 +78,7 @@
             topics.push({ name: topicName, subtopics: [] });
             localStorage.setItem('topics', JSON.stringify(topics));
             document.getElementById('topicName').value = '';
-            loadTopics();
+            renderTopics(topics);
         }
 
         function addSubtopic(index) {
@@ -71,14 +90,14 @@
             topics[index].subtopics.push(subtopicText);
             localStorage.setItem('topics', JSON.stringify(topics));
             input.value = ''; // Clear input after adding
-            loadTopics();
+            renderTopics(topics);
         }
 
         function deleteTopic(index) {
             let topics = JSON.parse(localStorage.getItem('topics')) || [];
             topics.splice(index, 1);
             localStorage.setItem('topics', JSON.stringify(topics));
-            loadTopics();
+            renderTopics(topics);
         }
 
         function backupData() {
@@ -93,7 +112,20 @@
             document.body.removeChild(a);
         }
 
-        document.addEventListener("DOMContentLoaded", loadTopics);
+        function importData() {
+            let fileInput = document.getElementById('importFile');
+            let file = fileInput.files[0];
+
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                let importedData = JSON.parse(event.target.result);
+                localStorage.setItem('topics', JSON.stringify(importedData));
+                renderTopics(importedData);
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>
